@@ -1,60 +1,76 @@
-import cv2
+import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
 
+# 计算灰度直方图
+def calcGrayHist(grayimage):
+    # 灰度图像矩阵的高，宽
+    rows, cols = grayimage.shape
+
+    # 存储灰度直方图
+    grayHist = np.zeros([256], np.uint64)
+    for r in range(rows):
+        for c in range(cols):
+            grayHist[grayimage[r][c]] += 1
+
+    return grayHist
+
+# 阈值分割：直方图技术法
+def threshTwoPeaks(image):
+
+    #转换为灰度图
+    if len(image.shape) == 2:
+        gray = image
+    else:
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+
+    # 计算灰度直方图
+    histogram = calcGrayHist(gray)
+    # 寻找灰度直方图的最大峰值对应的灰度值
+    # for k in range(1,255):
+    #     if histogram[k] > histogram[k-1] and histogram[k] > histogram[k+1]:
+    peak_set = 0
+    # print(maxLoc)
+    total = gray.size
+    top = 0
+    for k in range(254,0,-1):
+        top += histogram[k]
+        if (top/total)>=0.005:
+            break
+    peak_set = k
+
+    print('双峰为：',peak_set)
+
+    # 找到两个峰值之间的最小值对应的灰度值，作为阈值
+
+    thresh = peak_set + 2
+    # 找到阈值之后进行阈值处理，得到二值图
+    threshImage_out = gray.copy()
+    # 大于阈值的都设置为255
+    threshImage_out[threshImage_out > thresh] = 255
+    threshImage_out[threshImage_out <= thresh] = 0
+    return thresh, threshImage_out
+
+if __name__ == "__main__":
+
+    img = cv.imread('./image/2222.jpg')
+    #img = cv.imread('2.png')
+    img_gray = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
+
+    #灰度直方图曲线
+    hist = cv.calcHist([img_gray], [0], None, [256], [0, 255]) #对图像像素的统计分布，它统计了每个像素（0到L-1）的数量。
+    plt.plot(hist)
+    plt.show()
+
+    #灰度直方图
+    plt.hist(img_gray.ravel(), 256), plt.title('hist') #ravel()方法将数组维度拉成一维数组
+    # plt.show()
+    plt.savefig('1_hist.png')
+
+    thresh, img_sep = threshTwoPeaks(img)
+    print('灰度阈值为:',thresh)
+
+    cv.imwrite('1_sep.png', img_sep)
+    # cv.imwrite('2_sep.png', img_sep)
 
 
-def max_filter(image,filter_size):
-    # padding操作，在最大滤波中需要在原图像周围填充（filter_size//2）个小的数字，一般取-1
-    # 先生成一个全为-1的矩阵，大小和padding后的图像相同
-    empty_image = np.full((image.shape[0] + (filter_size // 2) * 2, image.shape[1] + (filter_size // 2) * 2), -1)
-    # 将原图像填充进矩阵
-    empty_image[(filter_size // 2):empty_image.shape[0] - (filter_size // 2),
-    (filter_size // 2):empty_image.shape[1] - (filter_size // 2)] = image.copy()
-    # 创建结果矩阵，和原图像大小相同
-    result = np.full((image.shape[0], image.shape[1]), -1)
-
-    # 遍历原图像中的每个像素点，对于点，选取其周围（filter_size*filter_size）个像素中的最大值，作为结果矩阵中的对应位置值
-    for h in range(filter_size // 2, empty_image.shape[0]-filter_size // 2):
-        for w in range(filter_size // 2, empty_image.shape[1]-filter_size // 2):
-            filter = empty_image[h - (filter_size // 2):h + (filter_size // 2) + 1,
-                     w - (filter_size // 2):w + (filter_size // 2) + 1]
-            result[h-filter_size // 2, w-filter_size // 2] = np.amax(filter)
-    return result
-
-
-
-def min_filter(image,filter_size):
-    # padding操作，在最大滤波中需要在原图像周围填充（filter_size//2）个大的数字，一般取大于255的
-    # 先生成一个全为-1的矩阵，大小和padding后的图像相同
-    empty_image = np.full((image.shape[0] + (filter_size // 2) * 2, image.shape[1] + (filter_size // 2) * 2), 400)
-    # 将原图像填充进矩阵
-    empty_image[(filter_size // 2):empty_image.shape[0] - (filter_size // 2),
-    (filter_size // 2):empty_image.shape[1] - (filter_size // 2)] = image.copy()
-    # 创建结果矩阵，和原图像大小相同
-    result = np.full((image.shape[0], image.shape[1]), 400)
-
-    # 遍历原图像中的每个像素点，对于点，选取其周围（filter_size*filter_size）个像素中的最小值，作为结果矩阵中的对应位置值
-    for h in range(filter_size // 2, empty_image.shape[0]-filter_size // 2):
-        for w in range(filter_size // 2, empty_image.shape[1]-filter_size // 2):
-            filter = empty_image[h - (filter_size // 2):h + (filter_size // 2) + 1,
-                     w - (filter_size // 2):w + (filter_size // 2) + 1]
-            result[h-filter_size // 2, w-filter_size // 2] = np.amin(filter)
-    return result
-
-
-
-def remove_shadow(image_path):
-    image = cv2.imread(image_path, 0)
-
-    max_result=max_filter(image,30)
-    min_result=min_filter(max_result,30)
-    result=image-min_result
-    result=cv2.normalize(result, None, 0, 255, norm_type=cv2.NORM_MINMAX)
-    return result
-
-
-if __name__ == '__main__':
-    # 方法：最大最小值滤波
-    gray = remove_shadow('./image/ROI_cube.png')
-    cv2.imwrite('./test_out1', gray)
