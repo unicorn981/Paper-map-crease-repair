@@ -14,12 +14,15 @@ def calcAndDrawHist(image):
 
 def show_hist(original_img):
     b, g, r = cv2.split(original_img)
-    histImgB = calcAndDrawHist(b)
-    histImgG = calcAndDrawHist(g)
-    histImgR = calcAndDrawHist(r)
-    plt.plot(histImgB, 'b')
-    plt.plot(histImgG, 'g')
-    plt.plot(histImgR, 'r')
+    gray = cv2.cvtColor(New_Img,cv2.COLOR_BGR2GRAY)
+    histimg = calcAndDrawHist(gray)
+    # histImgB = calcAndDrawHist(b)
+    # histImgG = calcAndDrawHist(g)
+    # histImgR = calcAndDrawHist(r)
+    # plt.plot(histImgB, 'b')
+    # plt.plot(histImgG, 'g')
+    # plt.plot(histImgR, 'r')
+    plt.plot(histimg, 'r')
     plt.show()
 
 
@@ -59,12 +62,16 @@ def count_gray(original_img):
     for y in range(height):
         for x in range(width):
 
-            # if 242 < gray_img[y, x]:
-            if thre < gray_img[y, x]:
+            if 243 < gray_img[y, x]:
+            # if thre <= gray_img[y, x]:
                 New_Img[y, x] = 255
     # ret ,New_Img = cv2.threshold(gray_img,0,255,cv2.THRESH_OTSU)
     cv2.imwrite(filepath+"count_gray.png", New_Img)
     return New_Img
+
+
+
+
 
 
 def draw_convexHull(original_img, New_Img):

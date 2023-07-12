@@ -1,10 +1,10 @@
 
 # -*- coding: utf-8 -*-
-
+_global_dict = {}
 def _init():  # 初始化
     global _global_dict
     _global_dict = {}
-    _global_dict['filepath'] = "./image2/"
+    _global_dict['filepath'] = "./image6/"
 
 def set_value(key, value):
     #定义一个全局变量

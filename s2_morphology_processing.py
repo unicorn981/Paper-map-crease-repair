@@ -1,11 +1,34 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-
+import s1_1_hist as hi
 import Global_value
 
 Global_value._init()
 filepath = Global_value.get_value('filepath')
+
+def count_gray(original_img):
+    height, width = original_img.shape[:2]
+    gray_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
+    # cv2.imshow("1",gray_img)
+    # cv2.waitKey(0)
+    num_color = gray_img.reshape(1, -1)[0]
+    len_color = int(len(num_color) * (1 - 0.05))
+    print("[num_color]", len(num_color))
+    print("[len_color]", len_color)
+
+    New_Img = np.zeros((height, width), dtype=np.uint8)
+    thre = hi.threshTwoPeaks(original_img)
+    for y in range(height):
+        for x in range(width):
+
+            # if 242 < gray_img[y, x]:
+            if thre <= gray_img[y, x]:
+                New_Img[y, x] = 255
+    # ret ,New_Img = cv2.threshold(gray_img,0,255,cv2.THRESH_OTSU)
+    # cv2.imwrite(filepath+"count_gray.png", New_Img)
+    return New_Img
+
 
 def shadowget(ROI_cube):
     img = ROI_cube
@@ -85,7 +108,16 @@ def Optimize(dst): #输入光度均匀处理后的图像
     #         if 242 < gray[y, x]:
     #         # if 190 < gray_img[y, x]:
     #             New_Img[y, x] = 255
+    # cv2.imshow("1s",gray)
     retVal, New_Img = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)
+    # New_Img = count_gray(dst)
+    for y in range(New_Img.shape[0]):
+        for x in range(New_Img.shape[1]):
+            New_Img[y,x] = 255 - New_Img[y,x]
+
+    cv2.imshow("s",New_Img)
+    cv2.waitKey(0)
+    New_Img = find_max_region(New_Img)
     # img2 = cv2.imread("./image/count_gray.png")
     kernel = np.ones((3, 17), np.uint8) #以下8段代码处理基于折痕在图上横向显示，其他情况不太适用
     kernel2 = np.ones((1, 7), np.uint8)
@@ -153,13 +185,19 @@ def Rosenfeld(im):
 
 if __name__ == '__main__':
     original_img = cv2.imread(filepath+"ROI_cube.png")
+    original_img = original_img[10:,:]
     result = shadowget(original_img)
+    gray = cv2.cvtColor(result,cv2.COLOR_BGR2GRAY)
+    # cv2.imshow("b21", gray)
+    # retVal,binary = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU)
+    # cv2.imshow("b",binary)
     rst = unevenLightCompensate(result)
     New_Img = Optimize(rst)
+    # cv2.imshow("result111", New_Img)
     img3 = find_max_region(New_Img)
     cv2.imwrite(filepath + "mask_sel.png", img3)
     img4 = Rosenfeld(img3)
-    cv2.imshow("result",img4)
+    cv2.imshow("result",img3)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 

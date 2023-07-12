@@ -35,11 +35,13 @@ def threshTwoPeaks(image):
     for k in range(254,0,-1):
         top += histogram[k]
         if (top/total)>=0.005:
+        # if (top / total) >= 0.01:
             break
     peak_set = k
 
 
-    thresh = peak_set + 2
+    thresh = peak_set
     # 找到阈值之后进行阈值处理，得到二值图
 
     return thresh
+
